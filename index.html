@@ -3,11 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <div id="widget-container"></div>
+    <script>
+        // Function to get signed URL from ElevenLabs API
+        async function getSignedUrl(apiKey, agentId) {
+            const url = `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${agentId}`;
+            const options = {
+                method: 'GET',
+                headers: {
+                    'xi-api-key': apiKey
+                }
+            };
 
- 
-    </head>
-    <body>
-        <elevenlabs-convai agent-id="pxYKTc65k0OaSK6UaDTZ"></elevenlabs-convai><script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json();
+                return data.signed_url;
+            } catch (error) {
+                console.error('Error fetching signed URL:', error);
+                return null;
+            }
+        }
 
-    </body>
-    </html>
+        // Initialize widget with signed URL
+        async function initializeWidget() {
+            // Get parameters from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const apiKey = urlParams.get('api_key');
+            const agentId = urlParams.get('agent_id');
+
+            if (!apiKey || !agentId) {
+                document.getElementById('widget-container').innerHTML = 'Missing API key or Agent ID';
+                return;
+            }
+
+            const signedUrl = await getSignedUrl(apiKey, agentId);
+            
+            if (signedUrl) {
+                // Create the widget element
+                const widget = document.createElement('elevenlabs-convai');
+                widget.setAttribute('signed-url', signedUrl);
+                widget.setAttribute('variant', 'expanded');
+                
+                // Add it to the container
+                document.getElementById('widget-container').appendChild(widget);
+                
+                // Add the ElevenLabs script
+                const script = document.createElement('script');
+                script.src = 'https://elevenlabs.io/convai-widget/index.js';
+                script.async = true;
+                script.type = 'text/javascript';
+                document.body.appendChild(script);
+            } else {
+                document.getElementById('widget-container').innerHTML = 'Failed to get signed URL';
+            }
+        }
+
+        // Start the initialization
+        initializeWidget();
+    </script>
+</body>
+</html>
